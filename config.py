@@ -12,8 +12,11 @@ from omegaconf import OmegaConf
 @dataclass(frozen=True)
 class Config:
     cfg_name: str = "my-cfg"
-    log_root: Path = Path("logs")
-    ckpt_root: Path = Path("ckpts")
+
+    root: Path = Path(".data/vall-e")
+    log_root: Path = Path(root, ".logs")
+    ckpt_root: Path = Path(root, ".ckpts")
+    tensorboard_root: Path = Path(root, ".tb")
 
     device: str = "cuda"
 

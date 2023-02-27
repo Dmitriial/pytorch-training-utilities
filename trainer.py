@@ -4,13 +4,15 @@ import random
 import selectors
 import sys
 from functools import cache
-from typing import Protocol
+from typing import Protocol, Dict
 
 import humanize
 import numpy as np
 import torch
 from torch.distributed import broadcast_object_list
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
+
 
 from .config import Config
 from .distributed import (
@@ -124,6 +126,7 @@ def train(
 ):
     engines = engines_loader()
     cfg = engines.cfg
+    writer = SummaryWriter(log_dir=str(cfg.tensorboard_root))
 
     if is_local_leader():
         cfg.dump()
@@ -152,9 +155,14 @@ def train(
             break
 
         batch = to_device(batch, torch.cuda.current_device())
-        stats = engines.step(feeder=train_feeder, batch=batch)
+        stats: Dict = engines.step(feeder=train_feeder, batch=batch)
         elapsed_time = stats.get("elapsed_time", 0)
         logger(data=stats)
+
+        # it's the easiest way to show progress of the model
+        if writer is not None:
+            for k, v in stats.items():
+                writer.add_scalar(f"train/{k}", v)
 
         command = _non_blocking_input()
 
