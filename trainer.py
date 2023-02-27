@@ -170,6 +170,9 @@ def train(
         # it's the easiest way to show progress of the model
         if _writer is not None:
             for k, v in stats.items():
+                if isinstance(v, str):
+                    continue
+
                 _writer.add_scalar(f"train/{k}", v, global_step=engines.global_step)
 
         command = _non_blocking_input()
