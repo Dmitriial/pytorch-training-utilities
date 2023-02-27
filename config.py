@@ -14,6 +14,8 @@ class Config:
     cfg_name: str = "my-cfg"
 
     root: Path = Path(".data/vall-e")
+    root.mkdir(parents=True, exist_ok=True)
+
     log_root: Path = Path(root, ".logs")
     ckpt_root: Path = Path(root, ".ckpts")
     tensorboard_root: Path = Path(root, ".tb")

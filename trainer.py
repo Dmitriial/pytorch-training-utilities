@@ -4,7 +4,7 @@ import random
 import selectors
 import sys
 from functools import cache
-from typing import Protocol, Dict
+from typing import Protocol, Dict, Optional
 
 import humanize
 import numpy as np
@@ -28,6 +28,9 @@ from .utils import to_device
 _logger = logging.getLogger(__name__)
 _engines: Engines
 _command: str
+
+# output dynamic data
+_writer: Optional[SummaryWriter] = None
 
 
 def get_global_step():
@@ -124,9 +127,14 @@ def train(
     eval_fn: EvalFn,
     logger: Logger = logger,
 ):
+    global _writer
+
     engines = engines_loader()
     cfg = engines.cfg
-    writer = SummaryWriter(log_dir=str(cfg.tensorboard_root))
+
+    if _writer is None:
+        _logger.info(f"create writer: {str(cfg.tensorboard_root)}")
+        _writer = SummaryWriter(log_dir=str(cfg.tensorboard_root))
 
     if is_local_leader():
         cfg.dump()
@@ -160,9 +168,9 @@ def train(
         logger(data=stats)
 
         # it's the easiest way to show progress of the model
-        if writer is not None:
+        if _writer is not None:
             for k, v in stats.items():
-                writer.add_scalar(f"train/{k}", v)
+                _writer.add_scalar(f"train/{k}", v, global_step=engines.global_step)
 
         command = _non_blocking_input()
 
