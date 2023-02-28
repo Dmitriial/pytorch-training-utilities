@@ -33,6 +33,8 @@ class Config:
     save_on_oom: bool = True
     save_on_quit: bool = True
 
+    model: str = "_"
+
     @property
     def relpath(self):
         return Path(self.cfg_name)

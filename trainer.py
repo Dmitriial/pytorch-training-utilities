@@ -173,7 +173,7 @@ def train(
                 if isinstance(v, str):
                     continue
 
-                _writer.add_scalar(f"train/{k}", v, global_step=engines.global_step)
+                _writer.add_scalar(f"{get_cfg().model}/train/{k}", v, global_step=engines.global_step)
 
         command = _non_blocking_input()
 
