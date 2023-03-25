@@ -4,6 +4,7 @@ import random
 import selectors
 import sys
 from functools import cache
+from pathlib import Path
 from typing import Protocol, Dict, Optional
 
 import humanize
@@ -59,8 +60,20 @@ class EarlyStopping:
         self.path = path
         self.trace_func = trace_func
 
+        self.backup_path = Path(".trainer.json")
+        self.first_step = True
+
     def __call__(self, val_loss, model: Optional = None, save_fn: Optional = None):
         score = -val_loss
+
+        data_state = {}
+        if self.first_step:
+            if self.backup_path.exists() and self.backup_path.is_file():
+                data_state = json.load(self.backup_path.open("r"))
+                self.best_score = data_state["best_score"]
+                self.counter = data_state["counter"]
+
+            self.first_step = False
 
         if self.best_score is None:
             self.best_score = score
@@ -82,6 +95,10 @@ class EarlyStopping:
                 save_fn()
 
             self.counter = 0
+
+        data_state["best_score"] = self.best_score
+        data_state["counter"] = self.counter
+        json.dump(data_state, self.backup_path.open("w"))
 
         return self.early_stop
 
