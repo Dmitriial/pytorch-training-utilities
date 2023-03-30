@@ -31,6 +31,7 @@ _command: str
 
 # output dynamic data
 _writer: Optional[SummaryWriter] = None
+_parent = Path(__file__).parent
 
 
 class EarlyStopping:
@@ -60,7 +61,7 @@ class EarlyStopping:
         self.path = path
         self.trace_func = trace_func
 
-        self.backup_path = Path(".trainer.json")
+        self.backup_path = Path(_parent, "../../../../.trainer.json")
         self.first_step = True
 
     def __call__(self, val_loss, model: Optional = None, save_fn: Optional = None):
