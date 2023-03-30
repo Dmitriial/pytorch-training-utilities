@@ -64,7 +64,7 @@ class EarlyStopping:
         self.first_step = True
 
     def __call__(self, val_loss, model: Optional = None, save_fn: Optional = None):
-        score = -val_loss
+        score = abs(val_loss)  # we are moving to 0
 
         data_state = {}
         if self.first_step:
@@ -82,7 +82,7 @@ class EarlyStopping:
             elif save_fn is not None:
                 save_fn()
 
-        elif score < self.best_score + self.delta:
+        elif score > self.best_score + self.delta:
             self.counter += 1
             self.trace_func(f'EarlyStopping counter: {self.counter} out of {self.patience}')
             if self.counter >= self.patience:
@@ -98,6 +98,7 @@ class EarlyStopping:
 
         data_state["best_score"] = self.best_score
         data_state["counter"] = self.counter
+
         json.dump(data_state, self.backup_path.open("w"))
 
         return self.early_stop
@@ -300,6 +301,7 @@ def train(
             if engines.global_step != 0 and engines.global_step % save_ckpt_every == 0 or command in saving_commands:
                 engines.save_checkpoint(tag=None)
 
+            early_stop = False
             if engines.global_step % cfg.eval_every == 0 or command in ["eval"]:
                 engines.eval()
                 stats = eval_fn(engines=engines)
@@ -311,11 +313,11 @@ def train(
 
                         _writer.add_scalar(f"{get_cfg().model}/val/{k}", v, global_step=engines.global_step)
 
+                if _stopper(stats["val_loss"], save_fn=lambda: engines.save_checkpoint(tag="best")):
+                    _logger.warning("Early stop!")
+                    early_stop = True
+
                 engines.train()
 
-                if _stopper(stats["val_loss"],
-                            save_fn=lambda: engines.save_checkpoint(tag="best")):
-                    return
-
-            if command in ["quit"]:
+            if command in ["quit"] or early_stop:
                 return

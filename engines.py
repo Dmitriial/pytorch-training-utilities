@@ -82,6 +82,7 @@ class Engines(dict[str, Engine]):
     def save_checkpoint(self, tag="default"):
         self.cfg.ckpt_dir.mkdir(parents=True, exist_ok=True)
         for name, engine in self.items():
+            _logger.warning(f"save checkpoint: {self.cfg.ckpt_dir / name}")
             engine.save_checkpoint(self.cfg.ckpt_dir / name, tag=tag)
 
     def load_checkpoint(self, tag=None):
