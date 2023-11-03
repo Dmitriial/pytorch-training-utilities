@@ -14,7 +14,6 @@ class Config:
     cfg_name: str = "my-cfg"
 
     root: Path = Path(".data/vall-e")
-    root.mkdir(parents=True, exist_ok=True)
 
     log_root: Path = Path(root, ".logs")
     ckpt_root: Path = Path(root, ".ckpts")
@@ -102,8 +101,9 @@ class Config:
         if "yaml" in cli_cfg:
             yaml_cfg = OmegaConf.load(cli_cfg.yaml)
             yaml_path = Path(cli_cfg.yaml).absolute()
-            cfg_name = Path(*yaml_path.relative_to(Path.cwd()).parts[1:])
-            cfg_name = cfg_name.with_suffix("")
+            # cfg_name = Path(*yaml_path.relative_to(Path.cwd()).parts[1:])
+            cfg_name = yaml_path.with_suffix("").name
+            # cfg_name = cfg_name.with_suffix("")
             yaml_cfg.setdefault("cfg_name", cfg_name)
             cli_cfg.pop("yaml")
         else:
