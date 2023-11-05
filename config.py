@@ -32,6 +32,10 @@ class Config:
     save_on_oom: bool = True
     save_on_quit: bool = True
 
+    early_stop: bool = True
+    early_stop_save_state: bool = True
+    early_stop_count: int = 50
+
     model: str = "_"
 
     @property

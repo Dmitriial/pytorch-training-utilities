@@ -37,7 +37,8 @@ _parent = Path(__file__).parent
 class EarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given patience."""
 
-    def __init__(self, patience=7, verbose=False, delta=0, path: Optional[str] = 'checkpoint.pt', trace_func=print):
+    def __init__(self, patience=7, verbose=False, delta=0, path: Optional[str] = 'checkpoint.pt', trace_func=print,
+                 model_name: str = "", save_state: bool = True):
         """
         Args:
             patience (int): How long to wait after last time validation loss improved.
@@ -50,6 +51,7 @@ class EarlyStopping:
                             Default: 'checkpoint.pt'
             trace_func (function): trace print function.
                             Default: print
+            model_name (str): model name.
         """
         self.patience = patience
         self.verbose = verbose
@@ -61,7 +63,10 @@ class EarlyStopping:
         self.path = path
         self.trace_func = trace_func
 
-        self.backup_path = Path(_parent, "../../../../.trainer.json")
+        self.backup_path = None
+        if save_state:
+            self.backup_path = Path(_parent, "../../../../.trainer-{0}.json".format(model_name))
+
         self.first_step = True
 
     def __call__(self, val_loss, model: Optional = None, save_fn: Optional = None):
@@ -69,7 +74,7 @@ class EarlyStopping:
 
         data_state = {}
         if self.first_step:
-            if self.backup_path.exists() and self.backup_path.is_file():
+            if self.backup_path is not None and self.backup_path.exists() and self.backup_path.is_file():
                 data_state = json.load(self.backup_path.open("r"))
                 self.best_score = data_state["best_score"]
                 self.counter = data_state["counter"]
@@ -90,17 +95,17 @@ class EarlyStopping:
                 self.early_stop = True
         else:
             self.best_score = score
+            self.counter = 0
+
             if model:
                 self.save_checkpoint(val_loss, model)
             elif save_fn is not None:
                 save_fn()
 
-            self.counter = 0
-
         data_state["best_score"] = self.best_score
         data_state["counter"] = self.counter
-
-        json.dump(data_state, self.backup_path.open("w"))
+        if self.backup_path is not None:
+            json.dump(data_state, self.backup_path.open("w"))
 
         return self.early_stop
 
@@ -113,7 +118,8 @@ class EarlyStopping:
         self.val_loss_min = val_loss
 
 
-_stopper = EarlyStopping(patience=10)
+_stopper = None
+# _stopper = EarlyStopping(patience=10)
 
 
 def get_global_step():
@@ -210,7 +216,7 @@ def train(
     eval_fn: EvalFn,
     logger: Logger = logger,
 ):
-    global _writer
+    global _writer, _stopper
 
     engines = engines_loader()
     cfg = engines.cfg
@@ -239,6 +245,9 @@ def train(
         engines.train()
     if command in ["quit", "eval_quit"]:
         return
+
+    _stopper = EarlyStopping(patience=get_cfg().early_stop_count, model_name=get_cfg().model,
+                             save_state=get_cfg().early_stop_save_state)
 
     # Training loop
     for batch in _make_infinite_epochs(train_dl):
@@ -320,5 +329,5 @@ def train(
 
                 engines.train()
 
-            if command in ["quit"] or early_stop:
+            if command in ["quit"] or (get_cfg().early_stop and early_stop):
                 return
