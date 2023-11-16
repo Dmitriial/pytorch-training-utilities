@@ -34,7 +34,7 @@ class Config:
 
     early_stop: bool = True
     early_stop_save_state: bool = True
-    early_stop_count: int = 50
+    early_stop_count: int = 100
 
     model: str = "_"
 
