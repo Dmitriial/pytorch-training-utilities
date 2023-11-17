@@ -36,6 +36,8 @@ class Config:
     early_stop_save_state: bool = True
     early_stop_count: int = 100
 
+    log_level: int = "warning"
+
     model: str = "_"
 
     @property

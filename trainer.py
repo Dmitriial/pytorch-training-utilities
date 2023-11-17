@@ -262,6 +262,9 @@ def train(
         # it's the easiest way to show progress of the model
         if _writer is not None:
             for k, v in stats.items():
+                if v is None:
+                    continue
+
                 if isinstance(v, str):
                     continue
 
@@ -318,6 +321,9 @@ def train(
                 # it's the easiest way to show progress of the model
                 if _writer is not None:
                     for k, v in stats.items():
+                        if v is None:
+                            continue
+
                         if isinstance(v, str):
                             continue
 
