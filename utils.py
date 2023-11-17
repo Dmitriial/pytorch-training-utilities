@@ -79,7 +79,7 @@ def load_state_dict_non_strict(model, state_dict, logger=None):
 def setup_logging(log_dir: str | Path | None = "log", log_level="info"):
     handlers = []
     stdout_handler = StreamHandler()
-    stdout_handler.setLevel(logging.INFO)
+    stdout_handler.setLevel(logging.getLevelName(log_level.upper()))
     formatter = ColoredFormatter(
         f"%(asctime)s - %(name)s - %(levelname)s - GR={global_rank()};LR={local_rank()} - \n%(message)s"
     )
